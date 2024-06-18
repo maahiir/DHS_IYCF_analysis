@@ -1,0 +1,804 @@
+---
+title: "PHI"
+output: html_document
+date: "2023-09-09"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+require(jtools)
+require(smerc) 
+require(gstat)
+require(knitr)
+require(MASS)
+require(corrplot)
+require(tmap)
+require(animation)
+require(zoo)
+require(readODS)
+require(tidyquant)
+require(spdep)
+require(tmap)
+require(tidyquant)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r}
+library(car)
+library(sf)
+library(ggplot2)
+library(tab)
+library(texreg)
+library(ggpubr)
+library(terra)
+library(data.table)
+library(gapminder)
+library(tidyquant)
+library(plotly)
+library(ARPALData)
+library(shinyjs)
+library(shiny)
+library(tmaptools)
+library(plotly)
+library(incidence)
+library(xts)
+library(bigmemory)
+library(ff)
+library(plyr)
+library(ggplot2)
+library(grid)
+library(dplyr)
+library(tidyr)
+library(tidyverse)
+library(lubridate)
+library(dygraphs)
+library(zoo)
+library(heatmaply)
+library(ggcorrplot)
+library(openair)
+library(rcompanion)
+library(lattice)
+library(aplpack)
+library(tcltk)
+library(maps)
+library(mapview)
+library(vars)
+library(sjPlot)
+library(sjmisc)
+library(likert)
+library(expss)
+library(openxlsx)
+library(strucchange)
+library(ltm)
+library(corrr)
+library(modeest)
+library(tableone)
+library(Hmisc)
+library(modelsummary)
+library(foreign) 
+library(lavaan)
+library(corrr)
+library(gtsummary)
+library(gridExtra)
+library(leaflet)
+library(haven)
+library(labelled)
+library(sjlabelled)
+library(naniar)
+library(hrbrthemes)
+library(extrafont)
+```
+
+
+##Loading country datasets
+
+```{r}
+#Benin
+dhs_benin_kr<-read_sas("D:/Lenovo data/Healthy diets for Afrika/DHS/DHS country datasets/Benin/Children_recode_BJKR71SD/BJKR71FL.SAS7BDAT")
+dhs_benin_hr<-read_sas("D:/Lenovo data/Healthy diets for Afrika/DHS/DHS country datasets/Benin/Household_recode_BJHR71SD/BJHR71FL.SAS7BDAT")
+dhs_benin_ir<-read_sas("D:/Lenovo data/Healthy diets for Afrika/DHS/DHS country datasets/Benin/Individual_recode_BJIR71SD/BJIR71FL.SAS7BDAT")
+rm(dhs_benin_ir)
+
+#Cameroon
+dhs_cameroon_kr<-read_sas("D:/Lenovo data/Healthy diets for Afrika/DHS/DHS country datasets/Cameroon/Children_recode_CMKR71SD/CMKR71FL.SAS7BDAT")
+dhs_cameroon_hr<-read_sas("D:/Lenovo data/Healthy diets for Afrika/DHS/DHS country datasets/Cameroon/Household_recode_CMHR71SD/CMHR71FL.SAS7BDAT")
+dhs_cameroon_ir<-read_sas("D:/Lenovo data/Healthy diets for Afrika/DHS/DHS country datasets/Cameroon/Individual_recode_CMIR71SD/CMIR71FL.SAS7BDAT")
+rm(plot)
+
+#Cote d'Ivorie
+dhs_cote_kr<-read_sas("D:/Lenovo data/Healthy diets for Afrika/DHS/DHS country datasets/Cote d'Ivoire/2021/Children_recode_CIKR62SD/CIKR81FL.SAS7BDAT")
+dhs_cote_hr<-read_sas("D:/Lenovo data/Healthy diets for Afrika/DHS/DHS country datasets/Cote d'Ivoire/2021/Household_recode_CIHR62SD/CIHR81FL.SAS7BDAT")
+dhs_cote_ir<-read_sas("D:/Lenovo data/Healthy diets for Afrika/DHS/DHS country datasets/Cote d'Ivoire/2021/Individual_recode_CIIR62SD/CIIR81FL.SAS7BDAT")
+dhs_cote_pr<-read_sas("~/Healthy diets for Afrika/DHS/DHS country datasets/Cote d'Ivoire/2021/Household_member_CIPR62SD/CIPR81FL.SAS7BDAT")
+rm(df)
+
+#Ghana
+dhs_ghana_kr<-read_sas("D:/Lenovo data/Healthy diets for Afrika/DHS/DHS country datasets/Ghana/2022/Children_recode_GHKR8ASD/GHKR8AFL.SAS7BDAT")
+dhs_ghana_hr<-read_sas("D:/Lenovo data/Healthy diets for Afrika/DHS/DHS country datasets/Ghana/2022/Household_recode_GHHR8ASD/GHHR8AFL.SAS7BDAT")
+dhs_ghana_ir<-read_sas("D:/Lenovo data/Healthy diets for Afrika/DHS/DHS country datasets/Ghana/2022/Individual_recode_GHIR8ASD/GHIR8AFL.SAS7BDAT")
+rm(dhs_cote_kr)
+
+#Kenya
+dhs_kenya_kr<-read_sas("D:/Lenovo data/Healthy diets for Afrika/DHS/DHS country datasets/Kenya/2022/Children_recode_KEKR8BSD/KEKR8BFL.SAS7BDAT")
+dhs_kenya_hr<-read_sas("D:/Lenovo data/Healthy diets for Afrika/DHS/DHS country datasets/Kenya/2022/Household_recode_KEHR8BSD/KEHR8BFL.SAS7BDAT")
+dhs_kenya_ir<-read_sas("D:/Lenovo data/Healthy diets for Afrika/DHS/DHS country datasets/Kenya/2022/Individual_recode_KEIR8BSD/KEIR8BFL.SAS7BDAT")
+rm(dhs_ghana_kr)
+
+#Liberia
+dhs_liberia_kr<-read_sas("D:/Lenovo data/Healthy diets for Afrika/DHS/DHS country datasets/Liberia/Children_recode_LBKR7ASD/LBKR7AFL.SAS7BDAT")
+dhs_liberia_hr<-read_sas("D:/Lenovo data/Healthy diets for Afrika/DHS/DHS country datasets/Liberia/Household_recode_LBHR7ASD/LBHR7AFL.SAS7BDAT")
+dhs_liberia_ir<-read_sas("D:/Lenovo data/Healthy diets for Afrika/DHS/DHS country datasets/Liberia/Individual_recode_LBIR7ASD/LBIR7AFL.SAS7BDAT")
+rm(dhs_kenya_kr)
+
+#Nigeria
+dhs_nigeria_kr<-read_sas("D:/Lenovo data/Healthy diets for Afrika/DHS/DHS country datasets/Nigeria/Children_recode_NGKR7BSD/NGKR7BFL.SAS7BDAT")
+dhs_nigeria_hr<-read_sas("D:/Lenovo data/Healthy diets for Afrika/DHS/DHS country datasets/Nigeria/Household_recode_NGHR7BSD/NGHR7BFL.SAS7BDAT")
+dhs_nigeria_ir<-read_sas("D:/Lenovo data/Healthy diets for Afrika/DHS/DHS country datasets/Nigeria/Individual_recode_NGIR7BSD/NGIR7BFL.SAS7BDAT")
+rm(dfl)
+
+#Uganda
+dhs_uganda_kr<-read_sas("D:/Lenovo data/Healthy diets for Afrika/DHS/DHS country datasets/Uganda/Children_recode_UGKR7BSD/UGKR7BFL.SAS7BDAT")
+dhs_uganda_hr<-read_sas("D:/Lenovo data/Healthy diets for Afrika/DHS/DHS country datasets/Uganda/Household_recode_UGHR7BSD/UGHR7BFL.SAS7BDAT")
+dhs_uganda_ir<-read_sas("D:/Lenovo data/Healthy diets for Afrika/DHS/DHS country datasets/Uganda/Individual_recode_UGIR7BSD/UGIR7BFL.SAS7BDAT")
+rm(df)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+
+
+```{r}
+#rename ids
+
+dhs_uganda_hr <- dhs_uganda_hr %>%
+  mutate(V001=HV001) %>%
+  mutate(V002=HV002)
+
+# keep relevant vars
+HRtemp =subset(dhs_uganda_hr, select=c(V001, V002, HV234A,HV025,HV271))
+
+#left_join dataset
+KRdata <- left_join(dhs_uganda_kr,HRtemp,by=c("V001", "V002"))
+
+  #remove temporary file used for left_join
+rm(HRtemp)
+
+names(KRdata)<-tolower(names(KRdata))
+```
+
+```{r}
+## Calculate age of child. If b19 is not available in the data use v008 - b3
+
+if ("TRUE" %in% (!("b19" %in% names(KRdata))))
+ { KRdata [[paste("b19")]] <- NA}
+if ("TRUE" %in% all(is.na(KRdata$b19)))
+{ b19_included <- 0} else { b19_included <- 1}
+
+if (b19_included==1) {
+  KRdata <- KRdata %>%
+    mutate(age = b19)
+} else {
+  KRdata <- KRdata %>%
+    mutate(age = v008 - b3)
+}
+
+```
+
+```{r}
+KRiycf <- KRdata %>%
+  subset(age < 24 & age>=6 & b9==0) %>% # children under 24 months living at home
+  arrange(caseid,bidx) %>% # make sure the data is sorted
+  subset(is.na(lag(caseid)) | caseid!=lag(caseid))
+
+```
+
+```{r}
+KRiycf <- KRiycf %>%
+  mutate(wt = v005/1000000)
+
+KRiycf <- KRiycf %>%
+  mutate(nt_bf_curr =
+           case_when(
+              m4==95  ~ 1 ,
+              m4 %in% c(93,94,98,99) ~ 0)) %>%
+  set_value_labels(nt_bf_curr = c("Yes" = 1, "No"=0  )) %>%
+  set_variable_labels(nt_bf_curr = "Currently breastfeeding - last-born under 2 years")
+
+names(KRiycf)<-tolower(names(KRiycf))
+
+```
+
+```{r}
+# *** Breastfeeding and complemenatry feeding ***
+# 
+# //currently breastfed
+
+KRiycf <- KRiycf %>%
+  mutate(water  = case_when(v409==1  ~ 1 , v409!=1 ~ 0)) %>%
+  mutate(liquids= case_when(v409a==1 | v410==1 | v410a==1 | v412c==1 | v413==1 | v413a==1 | v413b==1 | v413c==1 | v413d==1  ~ 1 , 
+                            v409a!=1 | v410!=1 | v410a!=1 | v412c!=1 | v413!=1 | v413a!=1 | v413b!=1 | v413c!=1 | v413d!=1 ~ 0)) %>%
+  mutate(milk   = case_when(v411==1 | v411a==1 ~ 1 , v411!=1 | v411a!=1 ~ 0)) %>%
+  mutate(solids = case_when(v414a==1 | v414b==1 | v414c==1 | v414d==1 | v414e==1 | v414f==1 | v414g==1 | v414h==1 | v414i==1 | 
+                            v414j==1 | v414k==1 | v414l==1 | v414m==1 | v414n==1 | v414o==1 | v414p==1 | v414q==1 | v414r==1 | 
+                            v414s==1 | v414t==1 | v414u==1 | v414v==1 | v414w==1 | v412a==1 | v412b==1 | m39a==1 ~ 1 ,
+                            v414a!=1 | v414b!=1 | v414c!=1 | v414d!=1 | v414e!=1 | v414f!=1 | v414g!=1 | v414h!=1 | v414i!=1 | 
+                            v414j!=1 | v414k!=1 | v414l!=1 | v414m!=1 | v414n!=1 | v414o!=1 | v414p!=1 | v414q!=1 | v414r!=1 | 
+                            v414s!=1 | v414t!=1 | v414u!=1 | v414v!=1 | v414w!=1 | v412a!=1 | v412b!=1 | m39a!=1~ 0) ) %>%
+  mutate(nt_bf_status = case_when(nt_bf_curr==0 ~ 0, solids==1 ~ 5, milk==1 ~ 4, liquids==1 ~3, water==1 ~2, TRUE~1 )) %>%
+  set_value_labels(nt_bf_status = c("not bf"=0, "exclusively bf"=1, "bf & plain water"=2, "bf & non-milk liquids"=3, "bf & other milk"=4, "bf & complemenatry foods"=5 )) %>%
+  set_variable_labels(nt_bf_status = "Breastfeeding status for last-born child under 2 years")
+
+```
+
+```{r}
+# //exclusively breastfed
+KRiycf <- KRiycf %>%
+  mutate(nt_ebf =
+           case_when(
+             age<6 & nt_bf_status==1  ~ 1 ,
+             age<6 & nt_bf_status!=1 ~ 0)) %>%
+  set_value_labels(nt_ebf = c("Yes" = 1, "No"=0  )) %>%
+  set_variable_labels(nt_ebf = "Exclusively breastfed - last-born under 6 months")
+```
+
+```{r}
+# //predominantly breastfeeding
+
+KRiycf <- KRiycf %>%
+  mutate(nt_predo_bf =
+           case_when(
+             age<6 & nt_bf_status %in%c(1,2,3)  ~ 1 ,
+             age<6 & nt_bf_status %in%c(0,4,5)  ~ 0)) %>%
+  set_value_labels(nt_predo_bf = c("Yes" = 1, "No"=0  )) %>%
+  set_variable_labels(nt_predo_bf = "Predominantly breastfed - last-born under 6 months")
+```
+
+```{r}
+# //age appropriate breastfeeding
+library(data.table)
+KRiycf <- KRiycf %>%
+  mutate(nt_ageapp_bf =
+           case_when(
+             nt_ebf==1 | nt_bf_status==5 & inrange(age,6,23)  ~ 1,
+             TRUE ~ 0 )) %>%
+  set_value_labels(nt_ageapp_bf = c("Yes" = 1, "No"=0  )) %>%
+  set_variable_labels(nt_ageapp_bf = "Age-appropriately breastfed - last-born under 2 years")
+```
+
+```{r}
+# //continuing breastfeeding at 1 year
+
+KRiycf <- KRiycf %>%
+  mutate(nt_food_bf =
+           case_when(
+             solids==1 & inrange(age,6,8)  ~ 1,
+             solids==0 & inrange(age,6,8) ~ 0 )) %>%
+  set_value_labels(nt_food_bf = c("Yes" = 1, "No"=0  )) %>%
+  set_variable_labels(nt_food_bf = "Introduced to solid, semi-solid, or soft foods - last-born 6-8 months")
+
+# //continuing breastfeeding at 1 year
+KRiycf <- KRiycf %>%
+  mutate(nt_bf_cont_1yr =
+           case_when(
+             m4==95 & inrange(age,12,15)  ~ 1,
+             m4!=95 & inrange(age,12,15) ~ 0 )) %>%
+  set_value_labels(nt_bf_cont_1yr = c("Yes" = 1, "No"=0  )) %>%
+  set_variable_labels(nt_bf_cont_1yr = "Continuing breastfeeding at 1 year (12-15 months) - last-born under 2 years")
+```
+
+```{r}
+# //continuing breastfeeding at 2 years
+KRiycf <- KRiycf %>%
+  mutate(nt_bf_cont_2yr =
+           case_when(
+             m4==95 & inrange(age,20,23)  ~ 1,
+             m4!=95 & inrange(age,20,23) ~ 0 )) %>%
+  set_value_labels(nt_bf_cont_2yr = c("Yes" = 1, "No"=0  )) %>%
+  set_variable_labels(nt_bf_cont_2yr = "Continuing breastfeeding at 2 year (20-23 months) - last-born under 2 years")
+```
+
+```{r}
+# *** Foods consumed ***
+KRiycf <- KRiycf %>%
+  # country specific foods. These can be added to the foods below based on the survey. See example for nt_root & nt_meatfish below
+  mutate(food1  = case_when(v414a==1  ~ 1 , v414a!=1 ~ 0)) %>%
+  mutate(food2  = case_when(v414b==1  ~ 1 , v414a!=1 ~ 0)) %>%
+  mutate(food3  = case_when(v414c==1  ~ 1 , v414a!=1 ~ 0)) %>%
+  mutate(food4  = case_when(v414d==1  ~ 1 , v414a!=1 ~ 0)) %>%
+  mutate(nt_formula  = case_when(v411a==1  ~ -1 , v411a!=1~ 0)) %>% # Given formula
+  mutate(nt_meat= case_when((v000 == "UG7" & (v414h==1 | food2==1)) | (v000 != "UG7" & (v414h==1)) ~ -1, 
+    (v000 == "UG7" & !(v414h==1 | food2==1)) | (v000 != "UG7" & !(v414h==1)) ~ 0))%>%
+  mutate(nt_organs= case_when((v000 == "UG7" & (v414m==1 | food2==1)) | (v000 != "UG7" & (v414m==1)) ~ -1, 
+    (v000 == "UG7" & !(v414m==1 | food2==1)) | (v000 != "UG7" & !(v414m==1)) ~ 0))%>%
+  mutate(nt_bbyfood  = case_when(v412a==1  ~ -1 , v412a!=1~ 0)) %>% # Given fortified baby food
+  mutate(nt_nuts  = case_when(v414o==1  ~ 1 , v414o!=1~ 0)) %>% # Given nuts or legumes
+
+  #add labels
+  set_value_labels(nt_formula = c("Yes" = -1, "No"=0  )) %>%
+  set_variable_labels(nt_formula = "Child given infant formula in day/night before survey - last-born under 2 years") %>%
+  set_value_labels(nt_meat = c("Yes" = -1, "No"=0  )) %>%
+  set_variable_labels(nt_meat = "Child given meat in the day/night before survey- last-born under 2 years")%>%
+  set_value_labels(nt_organs = c("Yes" = -1, "No"=0  )) %>%
+  set_variable_labels(nt_organs = "Child given organs in the day/night before survey- last-born under 2 years")%>% 
+  set_value_labels(nt_bbyfood = c("Yes" = -1, "No"=0  )) %>%
+  set_variable_labels(nt_bbyfood = "Child given fortified baby food in day/night before survey- last-born under 2 years") %>%
+  set_value_labels(nt_nuts = c("Yes" = 1, "No"=0  )) %>%
+  set_variable_labels(nt_nuts = "Child given legumes or nuts in day/night before survey- last-born under 2 years") 
+```
+
+```{r}
+KRiycf<-KRiycf%>%
+  mutate(food1 = case_when(v414a==1 ~ 1, v414a != 1 ~ 0))%>%
+  mutate(food2 = case_when(v414b==1 ~ 1, v414b != 1 ~ 0))%>%
+  mutate(food3 = case_when(v414c==1 ~ 1, v414c !=1 ~ 0))%>%
+  mutate(food4 = case_when(v414d==1 ~ 1, v414d !=1 ~ 0))%>%
+  mutate(nt_juice = case_when(v410 == 1 ~ 1, v410 != 1 ~ 0)) %>%
+  mutate(nt_soup_broth = case_when(v412c == 1 ~ 1, v412c != 1 ~ 0))%>%
+  mutate(nt_bread_noodles = case_when(v414e == 1 ~ 1, v414e != 1 ~ 0))%>%
+  mutate(nt_vege = case_when(v414i == 1 ~ 1, v414i != 1 ~ 0))%>%
+  mutate(nt_dark_green_vege = case_when(v414j == 1 ~ 1, v414j != 1 ~ 0))%>%
+  mutate(nt_fruits = case_when(v414k == 1 ~ 1, v414k != 1 ~ 0))%>%
+  mutate(nt_other_fruits = case_when(v414l == 1 ~ 1, v414l != 1 ~ 0))%>%
+  mutate(nt_milk  = case_when(v411==1  ~ 1 , v411!=1~ 0)) %>% # Given other milk
+  mutate(nt_dairy = case_when(v414p == 1 ~ 1, v414p!= 1 ~ 0))%>%
+  mutate(nt_yogurt = case_when(v414v == 1 ~ 1, v414v!= 1 ~ 0))%>%
+  mutate(nt_root  = case_when((v000 == "UG7" & (v414f==1 | food1==1)) | (v000 != "UG7" & v414f==1) ~ 1, 
+    (v000 == "UG7" & (v414f!=1 | food1!=1)) | (v000 != "UG7" & v414f!=1) ~ 0)) %>% #given roots and tubers
+  mutate(nt_eggs  = case_when(v414g==1  ~ 1 , v414g!=1~ 0)) %>% #given eggs
+  
+  
+  #set labels
+  set_value_labels(nt_juice = c("Yes" = 1, "No"=0  )) %>%
+  set_variable_labels(nt_juice = "Child given juice in the day/night before survey- last-born under 2 years")%>%
+  set_value_labels(nt_soup_broth = c("Yes" = 1, "No"=0  )) %>%
+  set_variable_labels(nt_soup_broth = "Child given soup/broth in the day/night before survey- last-born under 2 years")%>%
+  set_value_labels(nt_bread_noodles = c("Yes" = 1, "No"=0  )) %>%
+  set_variable_labels(nt_bread_noodles = "Child given bread/noodles in the day/night before survey- last-born under 2 years")%>%
+  set_value_labels(nt_vege = c("Yes" = 1, "No"=0  )) %>%
+  set_variable_labels(nt_vege = "Child given vegetables in the day/night before survey- last-born under 2 years")%>%
+  set_value_labels(nt_dark_green_vege = c("Yes" = 1, "No"=0  )) %>%
+  set_variable_labels(nt_dark_green_vege = "Child given dark green vegetables in the day/night before survey- last-born under 2 years")%>%
+  set_value_labels(nt_fruits = c("Yes" = 1, "No"=0  )) %>%
+  set_variable_labels(nt_fruits = "Child given Vit A rich fruits in the day/night before survey- last-born under 2 years")%>% 
+  set_value_labels(nt_other_fruits = c("Yes" = 1, "No"=0  )) %>%
+  set_variable_labels(nt_other_fruits = "Child given other fruits in the day/night before survey- last-born under 2 years")%>%
+  set_value_labels(nt_milk = c("Yes" = 1, "No"=0  )) %>%
+  set_variable_labels(nt_milk = "Child given other milk in day/night before survey- last-born under 2 years") %>%
+  set_value_labels(nt_dairy = c("Yes" = 1, "No"=0  )) %>%
+  set_variable_labels(nt_dairy = "Child given dairy in the day/night before survey- last-born under 2 years")%>% 
+  set_value_labels(nt_yogurt = c("Yes" = 1, "No"=0  )) %>%
+  set_variable_labels(nt_yogurt = "Child given yogurt in the day/night before survey- last-born under 2 years")%>%
+  set_value_labels(nt_root = c("Yes" = 1, "No"=0  )) %>%
+  set_variable_labels(nt_root = "Child given roots or tubers in day/night before survey- last-born under 2 years")%>%
+  set_value_labels(nt_eggs = c("Yes" = 1, "No"=0  )) %>%
+  set_variable_labels(nt_eggs = "Child given eggs in day/night before survey- last-born under 2 years")
+```
+
+
+```{r}
+KRiycf<- KRiycf %>%
+  mutate(food1  = case_when(v414a==1  ~ 1 , v414a!=1 ~ 0)) %>%
+  mutate(food2  = case_when(v414b==1  ~ 1 , v414a!=1 ~ 0)) %>%
+  mutate(food3  = case_when(v414c==1  ~ 1 , v414a!=1 ~ 0)) %>%
+  mutate(food4  = case_when(v414d==1  ~ 1 , v414a!=1 ~ 0)) %>%
+  mutate(nt_fish= case_when((v000 == "UG7" & (v414n==1 | food2==1)) | (v000 != "UG7" & (v414n==1)) ~ 1, 
+    (v000 == "UG7" & !(v414n==1 | food2==1)) | (v000 != "UG7" & !(v414n==1)) ~ 0))%>%
+  set_value_labels(nt_fish = c("Yes" = 1, "No"=0  )) %>%
+  set_variable_labels(nt_fish = "Child given dish or shellfish in day/night before survey- last-born under 2 years")
+rm(mother_edu)
+KRiycf$sex<-KRiycf$b4
+KRiycf<-KRiycf%>% set_value_labels(sex = c("Boy"= 1, "Girl" =2))%>%set_variable_labels(sex = "Sex of the child")
+
+which( colnames(KRiycf)=="nt_formula" )
+which(colnames(IC)=="eduyr")
+
+KRiycf<-KRiycf%>%mutate(WI=hv271/100000)
+
+KRiycf$PHI<-rowSums(KRiycf[,c(1159:1176)], na.rm = T)
+
+KRiycf$opti_comp<-rowSums(KRiycf[,c(1171:1176)], na.rm = T)
+
+KRiycf$newPHI<-KRiycf$PHI- KRiycf$opti_comp
+
+formula<-formula%>%dplyr::mutate(cfreq=cumsum(freq))
+
+formula<-KRiycf%>%
+          group_by(nt_organs,newPHI)%>%filter(nt_organs ==-1)%>%
+              dplyr::summarise(n=n())%>%mutate(freq=n/sum(n)*100)
+
+eggs<-KRiycf%>%
+          group_by(nt_root,newPHI)%>%filter(nt_root ==1)%>%
+              dplyr::summarise(n=n())%>%mutate(freq=n/sum(n)*100)
+
+nut<-KRiycf%>%
+          group_by(nt_soup_broth,newPHI)%>%filter(nt_soup_broth ==1)%>%
+              dplyr::summarise(n=n())%>%mutate(freq=n/sum(n)*100)
+
+vege<-KRiycf%>%
+          group_by(nt_vege,newPHI)%>%filter(nt_vege ==1)%>%
+              dplyr::summarise(n=n())%>%mutate(freq=n/sum(n)*100)
+
+
+
+
+write.csv(eggs,"~/Healthy diets for Afrika/DHS/DHS country datasets/Uganda/Children_recode_UGKR7BSD/egg.csv")
+
+write.csv(nut,"~/Healthy diets for Afrika/DHS/DHS country datasets/Uganda/Children_recode_UGKR7BSD/nut.csv")
+
+write.csv(vege,"~/Healthy diets for Afrika/DHS/DHS country datasets/Uganda/Children_recode_UGKR7BSD/vege.csv")
+
+table(KRiycf$newPHI, useNA = "always")
+
+qqn<-quantile(KRiycf$newPHI, probs = c(0, 0.25, 0.50, 0.75, 1), na.rm= TRUE) 
+print(qqn)
+
+KRiycf<-KRiycf%>%mutate(Quartile = case_when(newPHI <0 ~ "Quartile 1", newPHI == 0 ~ "Quartile 2", newPHI == 1 ~ "Quartile 3", newPHI>=2 ~ "Quartile 4"))
+
+KRiycf<-KRiycf%>%mutate(Quartile = case_when(newPHI <1 ~ "Quartile 1", newPHI == 0 | newPHI ==1 ~ "Quartile 2", newPHI == 2 ~ "Quartile 3", newPHI>=3 ~ "Quartile 4"))
+KRiycf$Quartile<-as.factor(KRiycf$Quartile)
+
+KRiycf$age_cat<- cut(KRiycf$age, breaks = c(0,2,4,6,8,10,12,14,16,18,20,22,24), include.lowest = T)
+class(KRiycf$age_cat)
+which(colnames(KRiycf)=="hv025")
+plot<-KRiycf[,c(1139:1201)]
+
+write.csv2(plot, "C:/Users/localuser/Documents//plot_uganda.csv")
+table(KRiycf$newPHI, KRiycf$Quartile)
+
+plot1<-KRiycf%>%group_by(Quartile,age)%>%
+        dplyr::summarise(n=n())%>%mutate(percentage = n/sum(n)*100)
+plot1$age_cat<-as.numeric(plot1$age_cat)
+
+
+# Plot
+ggplot(plot1, aes(x=age, y = percentage, fill = Quartile)) + 
+    geom_area(alpha=0.6 , size=1, colour="white") + theme_ipsum()+scale_fill_viridis(discrete = T)+
+     ggtitle("Proportion of children in each Quartile of PHI Index")+xlab("Age of child in months") + ylab("Percentage") + guides(fill = guide_legend("Quartiles")) +  scale_x_continuous(breaks = c(6, 8, 10, 12, 14, 16, 18, 20, 22,24),
+                       labels = c("6 mo", "8 mo", "10 mo", "12 mo", "14 mo", "16 mo", "18 mo", "20 mo", 
+                                  "22 mo", "24 mo"))
+rm(plot2)
+
+ggplot(plot1, aes(x=age, y=percentage, group=Quartile, fill=Quartile)) +
+    geom_area(alpha=0.6 , size=1, colour="white") +
+    scale_fill_viridis(discrete = TRUE) +
+    theme(legend.position="none") +
+    ggtitle("Proportion of children in each Quartile of PHI Index") +
+    theme_ipsum() +
+    theme(
+      legend.position="none",
+      panel.spacing = unit(0.1, "lines"),
+      strip.text.x = element_text(size = 8)
+    ) +
+    facet_wrap(~Quartile, scale="free_y")
+
+
+font_import()
+yloadfonts(device = "win")
+
+KRiycf$Quartile<-as.factor(KRiycf$Quartile) 
+
+table(KRiycf$Quartile)
+
+min(KRiycf$age)
+
+#N in each quartile
+sum(KRiycf$newPHI<0, na.rm = T)
+mean(KRiycf$newPHI<0, na.rm = T)
+
+sum(KRiycf$newPHI>=0 & KRiycf$newPHI<2,na.rm = T)
+mean(KRiycf$newPHI>=0 & KRiycf$newPHI<2,na.rm = T)
+
+sum(KRiycf$newPHI==2,na.rm = T)
+mean(KRiycf$newPHI==2,na.rm = T)
+
+sum(KRiycf$newPHI>=3,na.rm = T)
+mean(KRiycf$newPHI>=3,na.rm = T)
+
+#Number of boys
+sum(KRiycf$sex==1 & KRiycf$newPHI<0, na.rm=T)
+mean(KRiycf$sex==1 & KRiycf$newPHI<0,na.rm = T)
+sum(KRiycf$sex==1, na.rm = T)
+
+#Mean age and SD
+mean(KRiycf[KRiycf$newPHI<0,'age'])
+sub_q1<-KRiycf$newPHI < 0
+sd(KRiycf$age[sub_q1])
+
+mean(KRiycf[KRiycf$newPHI>=0 & KRiycf$newPHI<2,'age'])
+sub_q2<-KRiycf$newPHI >= 0 & KRiycf$newPHI<2
+sd(KRiycf$age[sub_q2])
+
+mean(KRiycf[KRiycf$newPHI==2,'age'])
+sub_q3<-KRiycf$newPHI == 2
+sd(KRiycf$age[sub_q3])
+
+mean(KRiycf[KRiycf$newPHI>=3,'age'])
+sub_q4<-KRiycf$newPHI>= 3
+sd(KRiycf$age[sub_q4])
+min(dhs_benin_hr$HV271)
+
+#urban residence
+sum(KRiycf$v025==1 & KRiycf$newPHI>=2)
+mean(KRiycf$v025==1 & KRiycf$newPHI>=2)
+
+#christian religion
+sum(KRiycf$v130==2 & KRiycf$newPHI==0)
+mean(KRiycf$v130==2 & KRiycf$newPHI==0)
+
+#lack of mothers education
+sum(KRiycf$eduyr==0 & KRiycf$newPHI==0, na.rm = T)
+mean(KRiycf$eduyr==0 & KRiycf$newPHI==0, na.rm = T)
+sum(KRiycf$eduyr==0)
+
+#lack of mothers education
+sum(KRiycf$eduyr==0 & KRiycf$newPHI>=2)
+mean(KRiycf$eduyr==0 & KRiycf$newPHI>=2)
+
+plotNormalHistogram(KRiycf$age, prob = TRUE, col = "gray", lwd = 0.5, linecol = "blue", breaks = 30)
+
+
+
+
+```
+
+
+```{r}
+
+names(dhs_benin_ir)<-tolower(names(dhs_benin_ir))
+IRdata <- dhs_benin_ir %>%
+  filter(v012 <= 49) %>%
+  mutate(wt = v005/1000000) %>%
+  mutate(rc_edu = v149,
+         rc_edu = set_label(rc_edu, label = "Highest level of schooling attended or completed")) %>%
+  mutate(eduyr = case_when(
+    v133<=20 ~ v133, 
+    v133>20 & v133<95 ~ 20, 
+    v133>95 | v149>7 ~ 99)) %>%
+  replace_with_na(replace = list(eduyr = c(99)))
+which(colnames(KRiycf)=="age")
+mother_edu<-IRdata[,c(3,4,68,5112)]
+mother_edu<-mother_edu[,c(-4,-5,-6)]
+KRiycf<-left_join(KRiycf,mother_edu, by=c("v001","v002"))
+table(mother_edu$v130, useNA = "always")
+which(colnames(IRdata)=="eduyr")
+
+new<-KRiycf[,c(1192,1230)]
+KRiycf <- left_join(KRiycf,mother_edu,by=c("v001", "v002"))
+
+```
+
+```{r}
+# //Fed milk or milk products
+KRiycf <- KRiycf %>%
+  mutate(v469e_ = v469e) %>%
+  replace_with_na(replace = list(v469e_ = c(8)))%>%
+  mutate(v469f_ = v469f) %>%
+  replace_with_na(replace = list(v469f_ = c(8)))%>%
+  mutate(v469x_ = v469x) %>%
+  replace_with_na(replace = list(v469x_ = c(8)))%>%
+  mutate(v469e_ = coalesce(v469e_, 0),
+         v469f_ = coalesce(v469f_, 0),
+         v469x_ = coalesce(v469x_, 0))%>%
+  mutate(totmilkf= v469e_ + v469f_ + v469x_) %>%
+  mutate(nt_fed_milk  = 
+           case_when(totmilkf>=2 | m4==95 & inrange(age,6,23) ~ 1 , 
+                     totmilkf <2 | m4!=95 & inrange(age,6,23) ~ 0)) %>%
+  set_value_labels(nt_fed_milk = c("Yes" = 1, "No"=0  )) %>%
+  set_variable_labels(nt_fed_milk = "Child given milk or milk products- last-born 6-23 months")
+```
+
+```{r}
+
+# //Min dietary diversity
+KRiycf <- KRiycf %>%
+  # 1. breastmilk
+  mutate(group1 = case_when(m4==95  ~ 1 ,  m4!=95 ~ 0)) %>% 
+  #2. infant formula, milk other than breast milk, cheese or yogurt or other milk products
+  mutate(group2 = case_when(nt_formula==1 | nt_milk==1 | nt_dairy==1  ~ 1 , nt_formula!=1 | nt_milk!=1 | nt_dairy!=1 ~ 0)) %>%
+  #3. foods made from grains, roots, tubers, and bananas/plantains, including porridge and fortified baby food from grains
+  mutate(group3  = case_when(nt_bread_noodles==1 | nt_root==1 | nt_bbyfood==1 ~ 1 , nt_bread_noodles!=1 | nt_root!=1 | nt_bbyfood!=1 ~ 0)) %>%
+  #4. vitamin A-rich fruits and vegetables
+  mutate(group4  = case_when(nt_fruits==1  ~ 1 , nt_fruits!=1 ~ 0)) %>%
+  #5. other fruits and vegetables
+  mutate(group5  = case_when(nt_vege==1 ~ 1 , nt_vege!=1~ 0)) %>% 
+  #6. eggs
+  mutate(group6  = case_when(nt_eggs==1 ~ 1 , nt_eggs!=1~ 0)) %>% 
+  #7. meat, poultry, fish, and shellfish (and organ meats)
+  mutate(group7  = case_when(nt_meat==1 |nt_organs==1| nt_fish==1 ~ 1 , nt_meat!=1| nt_organs!=1| nt_fish!=1~ 0)) %>% 
+  #8. legumes and nuts
+  mutate(group8  = case_when(nt_nuts==1 ~ 1 , nt_nuts!=1~ 0)) %>% 
+  #add the food groups
+  mutate(foodsum  = group1+group2+group3+group4+group5+group6+group7+group8) %>% 
+  mutate(nt_mdd  = case_when(inrange(age,6,23) & foodsum<5 ~ 0 , inrange(age,6,23) & foodsum>=5~ 1)) %>% 
+  #older surveys are 4 out of 7 food groups so the foodsum would add group2-group8 and the recode the sum for 4+ as yes
+  set_value_labels(nt_mdd = c("Yes" = 1, "No"=0  )) %>%
+  set_variable_labels(nt_mdd = "Child with minimum dietary diversity, 5 out of 8 food groups- last-born 6-23 months")
+```
+
+```{r}
+# //Min meal frequency
+KRiycf <- KRiycf %>%
+  mutate(feedings = case_when(m39>0 & m39<8 ~ totmilkf + m39 )) %>%
+  mutate(nt_mmf  = 
+           if_else(inrange(age,6,23) & (m4==95 & inrange(m39,2,7) & inrange(age,6,8)) | (m4==95 & inrange(m39,3,7) & inrange(age,9,23)) |
+                  (m4!=95 & feedings>=4 & inrange(age,6,23)), 1, 0 )) 
+KRiycf[["nt_mmf"]] <- ifelse(KRiycf[["age"]]<6, NA, KRiycf[["nt_mmf"]])
+KRiycf <- KRiycf %>%
+  set_value_labels(nt_mmf = c("Yes" = 1, "No"=0  )) %>%
+  set_variable_labels(nt_mmf = "Child with minimum meal frequency- last-born 6-23 months")
+
+```
+
+```{r}
+
+# //Min acceptable diet
+KRiycf <- KRiycf %>%
+  mutate(foodsum2 = nt_bread_noodles+nt_bbyfood+nt_root+nt_nuts+nt_meat+nt_fish+nt_organs+nt_vege+nt_fruits+nt_dark_green_vege+nt_other_fruits+nt_eggs) %>%
+  mutate(nt_mad  = 
+           if_else((m4==95 & nt_mdd==1 & nt_mmf==1) | (m4!=95 & foodsum2>=4 & nt_mmf==1 & totmilkf>=2), 1, 0 )) 
+KRiycf[["nt_mad"]] <- ifelse(KRiycf[["age"]]<6, NA, KRiycf[["nt_mad"]])
+KRiycf <- KRiycf %>%
+  set_value_labels(nt_mad = c("Yes" = 1, "No"=0  )) %>%
+  set_variable_labels(nt_mad = "Child with minimum acceptable diet- last-born 6-23 months")
+
+```
+
+
+```{r}
+# *** Among non-breastfeeding children ***
+table_temp <-  KRiycf %>% 
+  filter(nt_bf_curr==1) %>%
+  cross_rpct(
+    cell_vars = list(agecats,total()),
+    col_vars = list(nt_formula, nt_milk, nt_juice,nt_soup_broth,nt_other_liq, nt_bbyfood, nt_bread_noodles,nt_vege,nt_dark_green_vege, 
+                    nt_fruits, nt_other_fruits, nt_root,nt_meat,nt_organs,nt_fish, nt_nuts,nt_eggs, nt_dairy, nt_solids),
+    weight = wt,
+    total_label = "Weighted N",
+    total_statistic = "w_cases",
+    total_row_position = c("below"),
+    expss_digits(digits=1)) %>%
+  set_caption("Food and liquids consumed - bf children")
+write.xlsx(table_temp, "~/Healthy diets for Afrika/DHS/DHS country datasets/Benin/Children_recode_BJKR71SD/Tables_bf.xlsx", sheetName = "foods_bfchild", append=TRUE)
+
+
+
+# *** Among non-breastfeeding children ***
+table_temp1 <-  KRiycf %>% 
+  filter(nt_bf_curr==0) %>%
+  cross_rpct(
+    cell_vars = list(agecats,total()),
+    col_vars = list(nt_formula, nt_milk, nt_liquids, nt_bbyfood, nt_grains, nt_vita, nt_frtveg, nt_root, 
+                    nt_nuts, nt_meatfish, nt_eggs, nt_dairy, nt_solids),
+    weight = wt,
+    total_label = "Weighted N",
+    total_statistic = "w_cases",
+    total_row_position = c("below"),
+    expss_digits(digits=1)) %>%
+  set_caption("Food and liquids consumed - non-bf children")
+write.xlsx(table_temp, "~/Healthy diets for Afrika/DHS/DHS country datasets/Benin/Children_recode_BJKR71SD/Tables_bf.xlsx", sheetName = "foods_bfchild", sheetName = "foods_nonbfchild", append=TRUE)
+```
+
+
+```{r}
+table_temp <-  KRiycf %>% 
+  filter(nt_bf_curr==1) %>%
+  cross_rpct(
+    cell_vars = list(agecats,total()),
+    col_vars = list(nt_formula, nt_milk, nt_liquids, nt_bbyfood, nt_grains, nt_vita, nt_frtveg, nt_root, 
+                    nt_nuts, nt_meat, nt_eggs, nt_dairy, nt_solids, nt_fish),
+    weight = wt,
+    total_label = "Weighted N",
+    total_statistic = "w_cases",
+    total_row_position = c("below"),
+    expss_digits(digits=1)) %>%
+  set_caption("Food and liquids consumed - bf children")
+
+write.xlsx(table_temp, "~/Healthy diets for Afrika/DHS/DHS country datasets/Benin/Children_recode_BJKR71SD/Tables_bf.xlsx", sheetName = "foods_bfchild", append=TRUE)
+```
+
+
+```{r}
+# //Consumed Vit A rich food
+KRiycf <- KRiycf %>%
+  mutate(nt_ch_micro_vaf  = 
+           if_else(v414g==1 | v414h==1 | v414i==1 | v414j==1 | v414k==1 | v414m==1 | v414n==1, 1, 0 )) 
+KRiycf[["nt_ch_micro_vaf"]] <- ifelse(KRiycf[["age"]]<6 | KRiycf[["age"]]>23  , NA, KRiycf[["nt_ch_micro_vaf"]])  
+KRiycf <- KRiycf %>%
+  set_value_labels(nt_ch_micro_vaf = c("Yes" = 1, "No"=0  )) %>%
+  set_variable_labels(nt_ch_micro_vaf = "Youngest children age 6-23 mos living with mother given Vit A rich food")
+```
+
+```{r}
+# //Consumed iron rich food
+KRiycf <- KRiycf %>%
+  mutate(nt_ch_micro_irf  = 
+           if_else(v414g==1 | v414h==1 | v414m==1 | v414n==1, 1, 0 )) 
+KRiycf[["nt_ch_micro_irf"]] <- ifelse(KRiycf[["age"]]<6 | KRiycf[["age"]]>23  , NA, KRiycf[["nt_ch_micro_irf"]])  
+KRiycf <- KRiycf %>%
+  set_value_labels(nt_ch_micro_irf = c("Yes" = 1, "No"=0  )) %>%
+  set_variable_labels(nt_ch_micro_irf = "Youngest children age 6-23 mos living with mother given iron rich food")
+```
+
+```{r}
+# //Age in months
+KRdata <- KRdata %>%
+  mutate(agemonths = case_when(age<6~ 1, age%in%c(6,7,8)~ 2, age%in%c(9,10,11)~ 3, age>=12&age<=17~ 4, 
+                               age>=18&age<=23~ 5, age>=24&age<=35~ 6, age>=36&age<=47~ 7, age>=48&age<=59~ 8)) %>%
+  set_value_labels(agemonths = c("<6"=1, "6-8"=2, "9-11"=3, "12-17"=4, "18-23"=5, "24-35"=6, "36-47"=7, "48-59"=8 )) %>%
+  set_variable_labels(agemonths = "Age of child months categories: 0-59")
+
+# //Age categories for children 0-23
+KRdata <- KRdata %>%
+  mutate(agecats = case_when(age<2~ 1, age%in%c(2,3)~ 2, age%in%c(4,5)~ 3, age%in%c(6,7,8)~ 4, 
+                             age%in%c(9,10,11)~ 5, age>=12&age<=17~ 6, age>=18&age<=23~ 7, age>23~99)) %>%
+  replace_with_na(replace = list(agecats = c(99))) %>%
+  set_value_labels(agecats = c("0-1"=1, "2-3"=2, "4-5"=3, "6-8"=4, "9-11"=5, "12-17"=6, "18-23"=7 )) %>%
+  set_variable_labels(agecats = "Age of child months categories: 0-23")
+
+
+```
+
+```{r}
+# //Place of delivery
+KRdata <- KRdata %>%
+  mutate(del_place = case_when(inrange(m15,20,39)~ 1, inrange(m15,10,19)~ 2, inrange(m15,40,99)~ 3)) %>%
+  set_value_labels(del_place = c("Health facility"=1, "Home"=2, "Other/Missing"=3 )) %>%
+  set_variable_labels(del_place = "Place of delivery")
+```
+
+```{r}
+# //Assistance during delivery
+# **Note: Assistance during delivery are country specific indicators. Check final report to know if these are coded correctly. 
+KRdata <- KRdata %>%
+  mutate(del_pv =
+           case_when(
+             m3a == 1 | m3b == 1 |  m3c == 1 | m3d == 1 | m3e == 1 | m3f == 1 ~ 1 ,
+             m3g == 1 ~ 2 ,
+             m3h == 1 | m3i == 1 | m3j == 1 | m3k == 1 | m3l == 1 | m3m == 1 ~ 3 ,
+             m3n ==1 ~ 4,
+             m3a ==8 | m3a==9 | age>=60 ~ 99)) %>%
+  replace_with_na(replace = list(del_pv = c(99))) %>%
+  set_value_labels(del_pv = c("Health personnel" = 1, "Traditional birth attendant"=2, "Other"=3, "No one"=4  )) %>%
+  set_variable_labels(del_pv = "Assistance during delivery")
+```
+
+```{r}
+# //Mother's age 
+KRdata <- KRdata %>%
+  mutate(agem = case_when(v013==1  ~ 1, v013 %in% c(2,3) ~ 2, v013 %in% c(4,5) ~ 3, v013%in% c(6,7) ~ 4, v013>7 ~ 5 )) %>%
+  set_value_labels(agem = c("15-19"=1, "20-29"=2, "30-39"=3, "40-49"=4, "50+"=5)) %>%
+  set_variable_labels(agem = "Mother's age categories")
+```
+
+```{r}
+# //Age categories for children 0-23
+KRiycf <- KRiycf %>%
+  mutate(agecats = case_when(age<2~ 1, age%in%c(2,3)~ 2, age%in%c(4,5)~ 3, age%in%c(6,7,8)~ 4, 
+                             age%in%c(9,10,11)~ 5, age>=12&age<=17~ 6, age>=18&age<=23~ 7, age>23~99)) %>%
+  replace_with_na(replace = list(agecats = c(99))) %>%
+  set_value_labels(agecats = c("0-1"=1, "2-3"=2, "4-5"=3, "6-8"=4, "9-11"=5, "12-17"=6, "18-23"=7 )) %>%
+  set_variable_labels(agecats = "Age of child months categories: 0-23")
+
+
+# //Mother's age 
+KRiycf <- KRiycf %>%
+  mutate(agem = case_when(v013==1  ~ 1, v013 %in% c(2,3) ~ 2, v013 %in% c(4,5) ~ 3, v013%in% c(6,7) ~ 4, v013>7 ~ 5 )) %>%
+  set_value_labels(agem = c("15-19"=1, "20-29"=2, "30-39"=3, "40-49"=4, "50+"=5)) %>%
+  set_variable_labels(agem = "Mother's age categories")
+
+table_temp <-  KRiycf %>% 
+  cross_rpct(
+    cell_vars = list(agecats, total()),
+    col_vars = list(nt_bf_status, nt_bf_curr),
+    weight = wt,
+    total_label = "Weighted N",
+    total_statistic = "w_cases",
+    total_row_position = c("below"),
+    expss_digits(digits=1)) %>%
+  set_caption("Breast feeding status")
+write.xlsx(table_temp, "~/Healthy diets for Afrika/DHS/DHS country datasets/Benin/Children_recode_BJKR71SD/Tables_bf.xlsx", sheetName = "bfstatus", append=TRUE)
+```
