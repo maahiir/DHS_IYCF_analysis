@@ -30,6 +30,7 @@ When you click the **Knit** button a document will be generated that includes bo
 
 ```{r}
 library(car)
+library(tidyverse)
 library(sf)
 library(ggplot2)
 library(tab)
@@ -54,7 +55,6 @@ library(ggplot2)
 library(grid)
 library(dplyr)
 library(tidyr)
-library(tidyverse)
 library(lubridate)
 library(dygraphs)
 library(zoo)
@@ -89,92 +89,266 @@ library(leaflet)
 library(haven)
 library(labelled)
 library(sjlabelled)
-library(naniar)
 library(hrbrthemes)
 library(extrafont)
+library(survey)
+library(naniar)
+Sys.setenv(LANG = "en")
+library(srvyr)
+library(weights)
+library(pscl)
+library(wCorr)
+library(boot)
+library(ggiraph)
+library(vcd)
+library(plm)
+library(lfe)
+library(descriptio)
+library(pollster)
+library(plm)
+library(nlme)
+library(lmerTest)
+library(piecewiseSEM)
+library(mvtnorm)
+#install.packages("mvtnorm")
 ```
 
 
 ##Loading country datasets
+#We will use four files from the DHS dataset for each country (Household recode (HR), Children recode (KR) and Individual recode (IR))
 
 ```{r}
 #Benin
-dhs_benin_kr<-read_sas("D:/Lenovo data/Healthy diets for Afrika/DHS/DHS country datasets/Benin/Children_recode_BJKR71SD/BJKR71FL.SAS7BDAT")
-dhs_benin_hr<-read_sas("D:/Lenovo data/Healthy diets for Afrika/DHS/DHS country datasets/Benin/Household_recode_BJHR71SD/BJHR71FL.SAS7BDAT")
+dhs_benin_kr<-read_sas("E:/Lenovo data/Healthy diets for Afrika/DHS/DHS country datasets/Benin/Children_recode_BJKR71SD/BJKR71FL.SAS7BDAT")
+dhs_benin_hr<-read_sas("E:/Lenovo data/Healthy diets for Afrika/DHS/DHS country datasets/Benin/Household_recode_BJHR71SD/BJHR71FL.SAS7BDAT")
 dhs_benin_ir<-read_sas("D:/Lenovo data/Healthy diets for Afrika/DHS/DHS country datasets/Benin/Individual_recode_BJIR71SD/BJIR71FL.SAS7BDAT")
-rm(dhs_benin_ir)
+rm(pooled)
 
 #Cameroon
 dhs_cameroon_kr<-read_sas("D:/Lenovo data/Healthy diets for Afrika/DHS/DHS country datasets/Cameroon/Children_recode_CMKR71SD/CMKR71FL.SAS7BDAT")
 dhs_cameroon_hr<-read_sas("D:/Lenovo data/Healthy diets for Afrika/DHS/DHS country datasets/Cameroon/Household_recode_CMHR71SD/CMHR71FL.SAS7BDAT")
 dhs_cameroon_ir<-read_sas("D:/Lenovo data/Healthy diets for Afrika/DHS/DHS country datasets/Cameroon/Individual_recode_CMIR71SD/CMIR71FL.SAS7BDAT")
-rm(plot)
+rm(KRiycf)
 
 #Cote d'Ivorie
 dhs_cote_kr<-read_sas("D:/Lenovo data/Healthy diets for Afrika/DHS/DHS country datasets/Cote d'Ivoire/2021/Children_recode_CIKR62SD/CIKR81FL.SAS7BDAT")
 dhs_cote_hr<-read_sas("D:/Lenovo data/Healthy diets for Afrika/DHS/DHS country datasets/Cote d'Ivoire/2021/Household_recode_CIHR62SD/CIHR81FL.SAS7BDAT")
 dhs_cote_ir<-read_sas("D:/Lenovo data/Healthy diets for Afrika/DHS/DHS country datasets/Cote d'Ivoire/2021/Individual_recode_CIIR62SD/CIIR81FL.SAS7BDAT")
 dhs_cote_pr<-read_sas("~/Healthy diets for Afrika/DHS/DHS country datasets/Cote d'Ivoire/2021/Household_member_CIPR62SD/CIPR81FL.SAS7BDAT")
-rm(df)
+rm(tb_benin)
 
 #Ghana
 dhs_ghana_kr<-read_sas("D:/Lenovo data/Healthy diets for Afrika/DHS/DHS country datasets/Ghana/2022/Children_recode_GHKR8ASD/GHKR8AFL.SAS7BDAT")
 dhs_ghana_hr<-read_sas("D:/Lenovo data/Healthy diets for Afrika/DHS/DHS country datasets/Ghana/2022/Household_recode_GHHR8ASD/GHHR8AFL.SAS7BDAT")
 dhs_ghana_ir<-read_sas("D:/Lenovo data/Healthy diets for Afrika/DHS/DHS country datasets/Ghana/2022/Individual_recode_GHIR8ASD/GHIR8AFL.SAS7BDAT")
-rm(dhs_cote_kr)
+rm(KRiycf)
 
 #Kenya
-dhs_kenya_kr<-read_sas("D:/Lenovo data/Healthy diets for Afrika/DHS/DHS country datasets/Kenya/2022/Children_recode_KEKR8BSD/KEKR8BFL.SAS7BDAT")
-dhs_kenya_hr<-read_sas("D:/Lenovo data/Healthy diets for Afrika/DHS/DHS country datasets/Kenya/2022/Household_recode_KEHR8BSD/KEHR8BFL.SAS7BDAT")
-dhs_kenya_ir<-read_sas("D:/Lenovo data/Healthy diets for Afrika/DHS/DHS country datasets/Kenya/2022/Individual_recode_KEIR8BSD/KEIR8BFL.SAS7BDAT")
-rm(dhs_ghana_kr)
+dhs_kenya_kr<-read_sas("D:/Lenovo data/Healthy diets for Afrika/DHS/DHS country datasets/Kenya/2022/Children_recode_KEKR8CSD/KEKR8CFL.SAS7BDAT")
+dhs_kenya_hr<-read_sas("D:/Lenovo data/Healthy diets for Afrika/DHS/DHS country datasets/Kenya/2022/Household_recode_KEHR8CSD/KEHR8CFL.SAS7BDAT")
+dhs_kenya_ir<-read_sas("D:/Lenovo data/Healthy diets for Afrika/DHS/DHS country datasets/Kenya/2022/Individual_recode_KEIR8CSD/KEIR8CFL.SAS7BDAT")
+rm(KRiycf)
 
 #Liberia
 dhs_liberia_kr<-read_sas("D:/Lenovo data/Healthy diets for Afrika/DHS/DHS country datasets/Liberia/Children_recode_LBKR7ASD/LBKR7AFL.SAS7BDAT")
 dhs_liberia_hr<-read_sas("D:/Lenovo data/Healthy diets for Afrika/DHS/DHS country datasets/Liberia/Household_recode_LBHR7ASD/LBHR7AFL.SAS7BDAT")
 dhs_liberia_ir<-read_sas("D:/Lenovo data/Healthy diets for Afrika/DHS/DHS country datasets/Liberia/Individual_recode_LBIR7ASD/LBIR7AFL.SAS7BDAT")
-rm(dhs_kenya_kr)
+rm(denorm)
 
 #Nigeria
 dhs_nigeria_kr<-read_sas("D:/Lenovo data/Healthy diets for Afrika/DHS/DHS country datasets/Nigeria/Children_recode_NGKR7BSD/NGKR7BFL.SAS7BDAT")
 dhs_nigeria_hr<-read_sas("D:/Lenovo data/Healthy diets for Afrika/DHS/DHS country datasets/Nigeria/Household_recode_NGHR7BSD/NGHR7BFL.SAS7BDAT")
 dhs_nigeria_ir<-read_sas("D:/Lenovo data/Healthy diets for Afrika/DHS/DHS country datasets/Nigeria/Individual_recode_NGIR7BSD/NGIR7BFL.SAS7BDAT")
-rm(dfl)
+rm(denorm)
 
 #Uganda
 dhs_uganda_kr<-read_sas("D:/Lenovo data/Healthy diets for Afrika/DHS/DHS country datasets/Uganda/Children_recode_UGKR7BSD/UGKR7BFL.SAS7BDAT")
 dhs_uganda_hr<-read_sas("D:/Lenovo data/Healthy diets for Afrika/DHS/DHS country datasets/Uganda/Household_recode_UGHR7BSD/UGHR7BFL.SAS7BDAT")
 dhs_uganda_ir<-read_sas("D:/Lenovo data/Healthy diets for Afrika/DHS/DHS country datasets/Uganda/Individual_recode_UGIR7BSD/UGIR7BFL.SAS7BDAT")
-rm(df)
+rm(sample)
+
 ```
 
 Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
 
 
 ```{r}
-#rename ids
 
-dhs_uganda_hr <- dhs_uganda_hr %>%
-  mutate(V001=HV001) %>%
-  mutate(V002=HV002)
+#In the following code block we are first loading the individual country data set that we have created using the rest of the code. After data cleaning, calculation of Planetary health diet index and food group indices we created individual country level data sets containing these variables, sociodemographic variables of interest and sampling and clustering variables. This was done in order to not repeat the primary analysis again and again. This also simplifies further data analysis; for example creating a pooled data of eight countries for country fixed effects analysis.
 
-# keep relevant vars
-HRtemp =subset(dhs_uganda_hr, select=c(V001, V002, HV234A,HV025,HV271))
+###Pooled Analysis###
+Benin<- read_csv2("E:/Lenovo data/Healthy diets for Afrika/DHS/DHS country datasets/DHS_IYCF_Analysis/tb_Benin.csv")
+Cameroon<- read_csv2("E:/Lenovo data/Healthy diets for Afrika/DHS/DHS country datasets/DHS_IYCF_Analysis/tb_Cameroon.csv")
+Cote<-read_csv2("E:/Lenovo data/Healthy diets for Afrika/DHS/DHS country datasets/DHS_IYCF_Analysis/tb_Cote_dIvoire.csv")
+Ghana<-read_csv2("E:/Lenovo data/Healthy diets for Afrika/DHS/DHS country datasets/DHS_IYCF_Analysis/tb_Ghana.csv")
+Kenya<-read_csv2("E:/Lenovo data/Healthy diets for Afrika/DHS/DHS country datasets/DHS_IYCF_Analysis/tb_Kenya.csv")
+Liberia<-read_csv2("E:/Lenovo data/Healthy diets for Afrika/DHS/DHS country datasets/DHS_IYCF_Analysis/tb_Liberia.csv")
+Nigeria<-read_csv2("E:/Lenovo data/Healthy diets for Afrika/DHS/DHS country datasets/DHS_IYCF_Analysis/tb_Nigeria.csv")
+Uganda<-read_csv2("E:/Lenovo data/Healthy diets for Afrika/DHS/DHS country datasets/DHS_IYCF_Analysis/tb_Uganda.csv")
+Benin<-Benin %>%mutate(country = "Benin") #add a new variable that adds country name
+Benin<-Benin %>%mutate(st_PHI = scale(newPHI)) #standardize the planetary health diet index variable for regression analysis
+Benin<-Benin %>%subset(age<6) #create a sub data set for generating exclusively breastfeeding tables
+Cameroon<-Cameroon %>%mutate(country = "Cameroon")
+Cameroon<-Cameroon %>%mutate(st_PHI = scale(newPHI))
+Cameroon<-Cameroon %>%subset(age<6)
+Cote<-Cote %>%mutate(country = "Cote")
+Cote<-Cote %>%mutate(st_PHI = scale(newPHI))
+Cote<-Cote %>%subset(age<6)
+Ghana<-Ghana %>%mutate(country = "Ghana")
+Ghana<-Ghana %>%mutate(st_PHI = scale(newPHI))
+Ghana<-Ghana %>%subset(age<6)
+Kenya<-Kenya %>%mutate(country = "Kenya")
+Kenya<-Kenya %>%mutate(st_PHI = scale(newPHI))
+Kenya<-Kenya %>%subset(age<6)
+Liberia<-Liberia %>%mutate(country = "Liberia")
+Liberia<-Liberia %>%mutate(st_PHI = scale(newPHI))
+Liberia<-Liberia %>%subset(age<6)
+Nigeria<-Nigeria %>%mutate(country = "Nigeria")
+Nigeria<-Nigeria %>%mutate(st_PHI = scale(newPHI))
+Nigeria<-Nigeria %>%subset(age<6)
+Uganda<-Uganda %>%mutate(country = "Uganda")
+Uganda<-Uganda %>%mutate(st_PHI = scale(newPHI))
+Uganda<-Uganda %>%subset(age<6)
+rm(pooled)
+pooled<-rbind(Benin, Cameroon, Cote, Ghana, Kenya, Liberia, Nigeria, Uganda) #pooled dataset for country fixed effects regression analysis
 
-#left_join dataset
-KRdata <- left_join(dhs_uganda_kr,HRtemp,by=c("V001", "V002"))
+####Dividing data into quartiles with increasing rank
+Benin<-Benin%>%arrange(newPHI)%>%mutate(nquartile=ntile(newPHI,4))
+Cameroon<-Cameroon%>%arrange(newPHI)%>%mutate(nquartile=ntile(newPHI,4))
+Cote<-Cote%>%arrange(newPHI)%>%mutate(nquartile=ntile(newPHI,4))
+Ghana<-Ghana%>%arrange(newPHI)%>%mutate(nquartile=ntile(newPHI,4))
+Kenya<-Kenya%>%arrange(newPHI)%>%mutate(nquartile=ntile(newPHI,4))
+Liberia<-Liberia%>%arrange(newPHI)%>%mutate(nquartile=ntile(newPHI,4))
+Nigeria<-Nigeria%>%arrange(newPHI)%>%mutate(nquartile=ntile(newPHI,4))
+Uganda<-Uganda%>%arrange(newPHI)%>%mutate(nquartile=ntile(newPHI,4))
 
-  #remove temporary file used for left_join
-rm(HRtemp)
 
-names(KRdata)<-tolower(names(KRdata))
+#pooled socio economic and demographic characteristics table 
+tb1<-svydesign(ids = ~v021,weights = ~wt ,data = pooled, strata = ~v022, nest = T) #create survey design object first
+pool<- tb1%>% tbl_svysummary(by ="country" ,include = c(age,res,wealth,sex,mo_edu,newPHI), type = list(newPHI~"continuous"),statistic = list(all_continuous() ~"{mean} ({sd})",all_categorical() ~ "{n} ({p}%)"), digits = all_continuous() ~ 2, label = c(age~"Age",res~"Residence",wealth~"Wealth Index",sex~"Sex",mo_edu~"Mothers Education", newPHI ~ "PHDI")) %>% add_p() %>% as_gt()%>%gt::gtsave(filename = "pool.docx")
+
+###Country tables (socio demographic characteristics)
+tb1<-svydesign(ids = ~v021,weights = ~wt ,data = Uganda, strata = ~v022, nest = T)
+NtaUg<- tb1%>% tbl_svysummary(by ="nquartile" ,include = c(age,res,wealth,sex,mo_edu,newPHI), type = list(newPHI~"continuous"),statistic = list(all_continuous() ~"{mean} ({sd})",all_categorical() ~ "{n} ({p}%)"), digits = all_continuous() ~ 2, label = c(age~"Age",res~"Residence",wealth~"Wealth Index",sex~"Sex",mo_edu~"Mothers Education", newPHI ~ "PHDI")) %>% add_p() %>% as_gt()%>%gt::gtsave(filename = "NtaUg.docx")
+
+##combined a nd couzntry level table for food item
+food_group<- tb1%>% tbl_svysummary(by ="country" ,include = c(nt_formula,nt_meat,nt_organs,nt_bbyfood,nt_nuts,nt_juice,nt_soup_broth,
+                    nt_bread_noodles,nt_vege,nt_dark_green_vege,nt_fruits,nt_other_fruits,nt_milk,nt_dairy,nt_yogurt,
+                    nt_root,nt_eggs,nt_fish),
+                    statistic = list(all_continuous() ~"{mean} ({sd})",all_categorical() ~ "{n} ({p}%)"), digits = all_continuous() ~ 2,                     label = c(nt_formula~"Formula",nt_meat~"Meat",nt_organs~"Organs",nt_bbyfood~"Baby Food",nt_nuts~"Nuts & Lentils",
+                    nt_juice ~ "Juice",nt_soup_broth~"Soup & Broth", nt_bread_noodles ~ "Bread & Noodles",nt_vege ~ "Vegetables",
+                    nt_dark_green_vege ~ "Dark Green Vegetables", nt_fruits ~ "Fruits", nt_other_fruits ~ "Other Fruits",
+                    nt_milk ~ "Milk", nt_dairy ~ "Dairy", nt_yogurt ~ "Yogurt", nt_root ~ " Roots & Tubers", nt_eggs ~ "Eggs", 
+                    nt_fish ~ "Fish")) %>% add_p() %>% as_gt()%>%gt::gtsave(filename = "food_groups.docx")
+
+food_group_quartile<- tb1%>% tbl_svysummary(by ="nquartile" ,include = c(nt_formula,nt_meat,nt_organs,nt_bbyfood,nt_nuts,nt_juice,nt_soup_broth,
+                    nt_bread_noodles,nt_vege,nt_dark_green_vege,nt_fruits,nt_other_fruits,nt_milk,nt_dairy,nt_yogurt,
+                    nt_root,nt_eggs,nt_fish),
+                    statistic = list(all_continuous() ~"{mean} ({sd})",all_categorical() ~ "{n} ({p}%)"), digits = all_continuous() ~ 2,                     label = c(nt_formula~"Formula",nt_meat~"Meat",nt_organs~"Organs",nt_bbyfood~"Baby Food",nt_nuts~"Nuts & Lentils",
+                    nt_juice ~ "Juice",nt_soup_broth~"Soup & Broth", nt_bread_noodles ~ "Bread & Noodles",nt_vege ~ "Vegetables",
+                    nt_dark_green_vege ~ "Dark Green Vegetables", nt_fruits ~ "Fruits", nt_other_fruits ~ "Other Fruits",
+                    nt_milk ~ "Milk", nt_dairy ~ "Dairy", nt_yogurt ~ "Yogurt", nt_root ~ " Roots & Tubers", nt_eggs ~ "Eggs", 
+                    nt_fish ~ "Fish")) %>% add_p() %>% as_gt()%>%gt::gtsave(filename = "food_groups_quartile.docx")
+
+tb1<-svydesign(ids = ~v021,weights = ~wt ,data = Uganda , strata = ~v022, nest = T)
+food_group_uganda<- tb1%>% tbl_svysummary(by ="nquartile" ,include = c(nt_formula,nt_meat,nt_organs,nt_bbyfood,nt_nuts,nt_juice,nt_soup_broth,
+                    nt_bread_noodles,nt_vege,nt_dark_green_vege,nt_fruits,nt_other_fruits,nt_milk,nt_dairy,nt_yogurt,
+                    nt_root,nt_eggs,nt_fish),
+                    statistic = list(all_continuous() ~"{mean} ({sd})",all_categorical() ~ "{n} ({p}%)"), digits = all_continuous() ~ 2,                     label = c(nt_formula~"Formula",nt_meat~"Meat",nt_organs~"Organs",nt_bbyfood~"Baby Food", 
+                    nt_nuts~"Nuts & Lentils",
+                    nt_juice ~ "Juice",nt_soup_broth~"Soup & Broth", nt_bread_noodles ~ "Bread & Noodles",nt_vege ~ "Vegetables",
+                    nt_dark_green_vege ~ "Dark Green Vegetables", nt_fruits ~ "Fruits", nt_other_fruits ~ "Other Fruits",
+                    nt_milk ~ "Milk", nt_dairy ~ "Dairy", nt_yogurt ~ "Yogurt", nt_root ~ " Roots & Tubers", nt_eggs ~ "Eggs", 
+                    nt_fish ~ "Fish")) %>% add_p() %>% as_gt()%>%gt::gtsave(filename = "food_groups_uganda.docx")
+
+###for countries without babyfood variable
+food_group_kenya<- tb1%>% tbl_svysummary(by ="nquartile" ,include = c(nt_formula,nt_meat,nt_organs,nt_nuts,nt_juice,nt_soup_broth,
+                    nt_bread_noodles,nt_vege,nt_dark_green_vege,nt_fruits,nt_other_fruits,nt_milk,nt_dairy,nt_yogurt,
+                    nt_root,nt_eggs,nt_fish),
+                    statistic = list(all_continuous() ~"{mean} ({sd})",all_categorical() ~ "{n} ({p}%)"), digits = all_continuous() ~ 2,                     label = c(nt_formula~"Formula",nt_meat~"Meat",nt_organs~"Organs", nt_nuts~"Nuts & Lentils",
+                    nt_juice ~ "Juice",nt_soup_broth~"Soup & Broth", nt_bread_noodles ~ "Bread & Noodles",nt_vege ~ "Vegetables",
+                    nt_dark_green_vege ~ "Dark Green Vegetables", nt_fruits ~ "Fruits", nt_other_fruits ~ "Other Fruits",
+                    nt_milk ~ "Milk", nt_dairy ~ "Dairy", nt_yogurt ~ "Yogurt", nt_root ~ " Roots & Tubers", nt_eggs ~ "Eggs", 
+                    nt_fish ~ "Fish")) %>% add_p() %>% as_gt()%>%gt::gtsave(filename = "food_groups_kenya.docx")
+
+
+####table for proportion of children satisfyinf food group indices in each quartile of planetary health diet index
+tb_data$nt_mad<-as.factor(tb_data$nt_mad) #just to make sure it categorical variable
+tb_data$nt_mmf<-as.factor(tb_data$nt_mmf)
+tb_data$nt_mdd<-as.factor(tb_data$nt_mdd)
+tb1<-svydesign(ids = ~v021,weights = ~wt ,data = Uganda, strata = ~v022, nest = T)
+FGIUg<- tb1%>% tbl_svysummary(by ="nquartile" ,include =   c(nt_mad,nt_mdd,nt_mmf),statistic = list(all_categorical() ~ "{n} ({p}%)"), label = c(nt_mmf~"Minimum meal frequency",nt_mdd~"Minimum dietary diversity",nt_mad~"Minimum acceptable diet"), missing_text = "NA", missing_stat = "{N_miss}") %>% add_p() %>% as_gt()%>%gt::gtsave(filename = "FGIUg.docx")
+
+#Preparing tables for children aged 0-5 who are /are not exclusively breastfed
+EBF<-subset(Benin, !is.na(nt_ebf))
+eb1<-svydesign(ids = ~v021,weights = ~wt ,data = Benin, strata = ~v022, nest = T)
+
+
+Eb_Be<-eb1%>% tbl_svysummary(by ="nt_ebf" ,include = c(age,res,wealth,sex,mo_edu,newPHI), type = list(newPHI~"continuous", age ~ "continuous"),statistic = list(all_continuous() ~"{mean} ({sd})",all_categorical() ~ "{n} ({p}%)"), digits = all_continuous() ~ 2, label = c(age~"Age",res~"Residence",wealth~"Wealth Index",sex~"Sex",mo_edu~"Mothers Education", newPHI ~ "PHDI")) %>% add_p() %>% as_gt()%>%gt::gtsave(filename = "Eb_Be.docx")
+
+
+#area plots for distribution of PHDI across age groups
+font_import() #it is possible that you might need to run this in order the install fonts needed for the areaplot
+loadfonts(device = "win")
+
+Uganda$nquartile<-as.factor(Uganda$nquartile)
+plot1<-Uganda%>%group_by(nquartile,age)%>%
+        dplyr::summarise(n=n())%>%mutate(percentage = n/sum(n)*100)
+
+ggplot(plot1, aes(x=age, y = percentage, fill = nquartile)) + 
+    geom_area(alpha=0.6 , size=1, colour="white") + theme_ipsum()+scale_fill_viridis(discrete = T, labels=c("Quartile 1", "Quartile 2",      "Quartile 3", "Quartile 4"))+ ggtitle("Proportion of children in each Quartile of PHI Index: Nigeria")+xlab("Age of child in months")             + ylab("Percentage") + guides(fill = guide_legend("Quartiles")) + 
+      scale_x_continuous(breaks = c(0,2,4,6, 8, 10, 12, 14, 16, 18, 20, 22,24),
+                       labels = c("0 mo","2 mo", "4 mo",  "6 mo", "8 mo", "10 mo", "12 mo", "14 mo", "16 mo", "18 mo", "20 mo", 
+                                  "22 mo","24")) + theme(axis.title.x = element_text(hjust=0.5, size =10), axis.title.y =                                 element_text(hjust=0.5, size =10))
 ```
 
 ```{r}
-## Calculate age of child. If b19 is not available in the data use v008 - b3
+#matching the ids of mothers from IR file with kids from KR file to make sure there is no duplication
 
+#The reason for doing this not only to avoid duplication, it is important to understand that the IR file collects information on all mothers and the KR file collects information on children under five years of age in a household from the mother (same case ID). In the KR file DHS collects data on diversity of food groups consumed for children aged between 0 - 23 months. In the data cleaning process for KR file, we select youngest child alive under two years of age to calculate planetary health diet index. For the pooled analysis we cannot use the normalized weights that DHS provides for each country data sets. We have to denormalize the weights.But direct denormalization in the KR file would be wrong because it excludes all the women who did not have children, and since women were the ones who were interviewed for the their children, denormlaization has to first happen in the IR file to get actual estimate of the population. After that you match the ids with the cleaned data set which you created for children aged 0-23 months and thus you have the denormalized weights for the children (mother's interviewed) in your data set. 
+
+names(dhs_benin_ir)<-tolower(names(dhs_benin_ir))
+dhs_benin_ir <- dhs_benin_ir %>%
+  mutate(wt = v005/1000000)
+matching_ids <- KRdata$caseid[KRdata$caseid %in% dhs_benin_ir$CASEID] #find out how many matching ids are there between IR and KR file
+dhs_benin_ir<-dhs_benin_ir%>%mutate(denorm = wt * (2717666/15928)) #denormalize the weights in IR file
+
+#Add the denormalized weight variable to KRiycf file by matching ids between IR and KRiycf
+KRiycf<-left_join(KRiycf,dhs_benin_ir,by=c("caseid"="caseid")) 
+
+tb_benin<-KRiycf[,c(1,26:28,1192:1255)] #select variables from the KRiycf file that you need for further analysis 
+
+#Repeat the same process for every country and generate a csv dataset for each of them for further analysis
+write.csv2(tb_benin,"D:/Lenovo data/Healthy diets for Afrika/DHS/DHS country datasets/DHS_IYCF_Analysis/tb_benin.csv")
+```
+
+
+
+```{r}
+#rename ids
+
+dhs_benin_hr <- dhs_benin_hr %>%
+  mutate(V001=HV001) %>%
+  mutate(V002=HV002) 
+
+# keep relevant vars
+HRtemp =subset(dhs_benin_hr, select=c(V001, V002, HV234A,HV025,HV271))
+
+
+#perform merge
+KRdata <- merge(dhs_benin_kr,HRtemp,by=c("V001", "V002"))
+
+#remove temporary file used for left_join
+rm(HRtemp)
+
+names(KRdata)<-tolower(names(KRdata))
+
+```
+
+```{r}
+# Calculate age of child. If b19 is not available in the data use v008 - b3
 if ("TRUE" %in% (!("b19" %in% names(KRdata))))
- { KRdata [[paste("b19")]] <- NA}
+  KRdata [[paste("b19")]] <- NA
 if ("TRUE" %in% all(is.na(KRdata$b19)))
 { b19_included <- 0} else { b19_included <- 1}
 
@@ -189,16 +363,33 @@ if (b19_included==1) {
 ```
 
 ```{r}
-KRiycf <- KRdata %>%
-  subset(age < 24 & age>=6 & b9==0) %>% # children under 24 months living at home
-  arrange(caseid,bidx) %>% # make sure the data is sorted
-  subset(is.na(lag(caseid)) | caseid!=lag(caseid))
 
+#create subset of KRfile to select for children for IYCF indicators
+#Following code is no longer working for selecting youngest child
+#KRiycf <- KRdata %>%
+  #subset(age < 24 & b9==0 & !is.na(b9)) %>% # children under 24 months living at home
+  #arrange(caseid, bidx) #%>% # make sure the data is sorted
+  #subset(is.na(lag(caseid)) | caseid!=lag(caseid)) # select just the youngest
+
+##solution 1
+KRiycf<-KRdata%>%subset(age < 24 & b9 == 0) %>% arrange(caseid,bidx)%>%
+          slice_min(by = caseid, order_by = bidx)
+
+#solution 2
+KRiycf <- KRdata %>%
+  subset(age < 24 & b9 == 0) %>%  # Keep children under 24 months living at home (b9 == 0)
+  arrange(caseid, bidx) %>%       # Sort data by 'caseid' (mother) and 'bidx' (child index)
+  distinct(caseid, .keep_all = TRUE) #ensures that only the youngest child for each mother is selected
+
+KRiycf<-KRiycf[, c(3,2,1,4:ncol(KRiycf))] #rearrage the columns to make sure caseid is the first column
 ```
 
 ```{r}
+#divide the weight variable by 1000000 to 
 KRiycf <- KRiycf %>%
   mutate(wt = v005/1000000)
+
+# //currently breastfed
 
 KRiycf <- KRiycf %>%
   mutate(nt_bf_curr =
@@ -208,9 +399,8 @@ KRiycf <- KRiycf %>%
   set_value_labels(nt_bf_curr = c("Yes" = 1, "No"=0  )) %>%
   set_variable_labels(nt_bf_curr = "Currently breastfeeding - last-born under 2 years")
 
-names(KRiycf)<-tolower(names(KRiycf))
-
 ```
+
 
 ```{r}
 # *** Breastfeeding and complemenatry feeding ***
@@ -331,6 +521,7 @@ KRiycf <- KRiycf %>%
 ```
 
 ```{r}
+##Foods consumed continued
 KRiycf<-KRiycf%>%
   mutate(food1 = case_when(v414a==1 ~ 1, v414a != 1 ~ 0))%>%
   mutate(food2 = case_when(v414b==1 ~ 1, v414b != 1 ~ 0))%>%
@@ -380,6 +571,7 @@ KRiycf<-KRiycf%>%
 
 
 ```{r}
+#Consumed fish or not
 KRiycf<- KRiycf %>%
   mutate(food1  = case_when(v414a==1  ~ 1 , v414a!=1 ~ 0)) %>%
   mutate(food2  = case_when(v414b==1  ~ 1 , v414a!=1 ~ 0)) %>%
@@ -389,50 +581,18 @@ KRiycf<- KRiycf %>%
     (v000 == "UG7" & !(v414n==1 | food2==1)) | (v000 != "UG7" & !(v414n==1)) ~ 0))%>%
   set_value_labels(nt_fish = c("Yes" = 1, "No"=0  )) %>%
   set_variable_labels(nt_fish = "Child given dish or shellfish in day/night before survey- last-born under 2 years")
-rm(mother_edu)
-KRiycf$sex<-KRiycf$b4
-KRiycf<-KRiycf%>% set_value_labels(sex = c("Boy"= 1, "Girl" =2))%>%set_variable_labels(sex = "Sex of the child")
-
-which( colnames(KRiycf)=="nt_formula" )
-which(colnames(IC)=="eduyr")
-
-KRiycf<-KRiycf%>%mutate(WI=hv271/100000)
-
-KRiycf$PHI<-rowSums(KRiycf[,c(1159:1176)], na.rm = T)
-
-KRiycf$opti_comp<-rowSums(KRiycf[,c(1171:1176)], na.rm = T)
-
-KRiycf$newPHI<-KRiycf$PHI- KRiycf$opti_comp
-
-formula<-formula%>%dplyr::mutate(cfreq=cumsum(freq))
-
-formula<-KRiycf%>%
-          group_by(nt_organs,newPHI)%>%filter(nt_organs ==-1)%>%
-              dplyr::summarise(n=n())%>%mutate(freq=n/sum(n)*100)
-
-eggs<-KRiycf%>%
-          group_by(nt_root,newPHI)%>%filter(nt_root ==1)%>%
-              dplyr::summarise(n=n())%>%mutate(freq=n/sum(n)*100)
-
-nut<-KRiycf%>%
-          group_by(nt_soup_broth,newPHI)%>%filter(nt_soup_broth ==1)%>%
-              dplyr::summarise(n=n())%>%mutate(freq=n/sum(n)*100)
-
-vege<-KRiycf%>%
-          group_by(nt_vege,newPHI)%>%filter(nt_vege ==1)%>%
-              dplyr::summarise(n=n())%>%mutate(freq=n/sum(n)*100)
-
-
-
-
-write.csv(eggs,"~/Healthy diets for Afrika/DHS/DHS country datasets/Uganda/Children_recode_UGKR7BSD/egg.csv")
-
-write.csv(nut,"~/Healthy diets for Afrika/DHS/DHS country datasets/Uganda/Children_recode_UGKR7BSD/nut.csv")
-
-write.csv(vege,"~/Healthy diets for Afrika/DHS/DHS country datasets/Uganda/Children_recode_UGKR7BSD/vege.csv")
 
 table(KRiycf$newPHI, useNA = "always")
 
+#calculation of planetary health diet index
+
+KRiycf$PHI<-rowSums(KRiycf[,c(1210:1227)], na.rm = T) 
+
+KRiycf$opti_comp<-rowSums(KRiycf[,c(1222:1227)], na.rm = T)
+
+KRiycf$newPHI<-KRiycf$PHI- KRiycf$opti_comp
+
+#Quartiles created based on Planetary health diet index
 qqn<-quantile(KRiycf$newPHI, probs = c(0, 0.25, 0.50, 0.75, 1), na.rm= TRUE) 
 print(qqn)
 
@@ -441,133 +601,47 @@ KRiycf<-KRiycf%>%mutate(Quartile = case_when(newPHI <0 ~ "Quartile 1", newPHI ==
 KRiycf<-KRiycf%>%mutate(Quartile = case_when(newPHI <1 ~ "Quartile 1", newPHI == 0 | newPHI ==1 ~ "Quartile 2", newPHI == 2 ~ "Quartile 3", newPHI>=3 ~ "Quartile 4"))
 KRiycf$Quartile<-as.factor(KRiycf$Quartile)
 
-KRiycf$age_cat<- cut(KRiycf$age, breaks = c(0,2,4,6,8,10,12,14,16,18,20,22,24), include.lowest = T)
-class(KRiycf$age_cat)
-which(colnames(KRiycf)=="hv025")
-plot<-KRiycf[,c(1139:1201)]
-
-write.csv2(plot, "C:/Users/localuser/Documents//plot_uganda.csv")
-table(KRiycf$newPHI, KRiycf$Quartile)
-
-plot1<-KRiycf%>%group_by(Quartile,age)%>%
-        dplyr::summarise(n=n())%>%mutate(percentage = n/sum(n)*100)
-plot1$age_cat<-as.numeric(plot1$age_cat)
+#Equal quartiles irrespective of rank 
+KRiycf <- KRiycf %>%
+  mutate(quartile = cut(seq_along(rownames(KRiycf)),  # Create sequence along rows of the dataframe
+    breaks = quantile(seq_along(rownames(KRiycf)), probs = seq(0, 1, by = 0.25), na.rm = TRUE),  # Calculate quartile breaks
+    include.lowest = TRUE,  # Include lowest value in Q1
+    labels = c("Q1", "Q2", "Q3", "Q4")  # Label the quartiles
+  ))
 
 
-# Plot
-ggplot(plot1, aes(x=age, y = percentage, fill = Quartile)) + 
-    geom_area(alpha=0.6 , size=1, colour="white") + theme_ipsum()+scale_fill_viridis(discrete = T)+
-     ggtitle("Proportion of children in each Quartile of PHI Index")+xlab("Age of child in months") + ylab("Percentage") + guides(fill = guide_legend("Quartiles")) +  scale_x_continuous(breaks = c(6, 8, 10, 12, 14, 16, 18, 20, 22,24),
-                       labels = c("6 mo", "8 mo", "10 mo", "12 mo", "14 mo", "16 mo", "18 mo", "20 mo", 
-                                  "22 mo", "24 mo"))
-rm(plot2)
-
-ggplot(plot1, aes(x=age, y=percentage, group=Quartile, fill=Quartile)) +
-    geom_area(alpha=0.6 , size=1, colour="white") +
-    scale_fill_viridis(discrete = TRUE) +
-    theme(legend.position="none") +
-    ggtitle("Proportion of children in each Quartile of PHI Index") +
-    theme_ipsum() +
-    theme(
-      legend.position="none",
-      panel.spacing = unit(0.1, "lines"),
-      strip.text.x = element_text(size = 8)
-    ) +
-    facet_wrap(~Quartile, scale="free_y")
+KRiycf<-KRiycf%>%mutate(wealth=hv271/100000) #calculate weath index 
+KRiycf<-KRiycf%>%mutate(mo_edu=case_when(v106==0~"No education",v106==1~"Primary education",v106==2~"Secondary education",v106==3~"Higher education")) # reconde the education variable 
+KRiycf$mo_edu<-as.factor(KRiycf$mo_edu)
+KRiycf<-KRiycf%>%mutate(sex=case_when(b4==1~"Boy", b4==2~"Girl")) #recode the sex variable
+KRiycf$sex<-as.factor(KRiycf$sex)
+KRiycf<-KRiycf%>%mutate(res=case_when(v025==1~"Urban", v025==2~"Rural")) #recode the residence varialbe
+KRiycf$res<-as.factor(KRiycf$res)
 
 
-font_import()
-yloadfonts(device = "win")
+Eb_Beu6<-eb1%>% tbl_svysummary( by = "nt_ebf",include = c(newPHI), type = list(newPHI~"continuous"),statistic = list(all_continuous() ~"{mean} ({sd})",all_categorical() ~ "{n} ({p}%)"), digits = all_continuous() ~ 2, label = c(newPHI ~ "Planetary Health Diet Index")) %>% add_p() %>% as_gt()%>%gt::gtsave(filename = "Eb_Beu6.docx")
 
-KRiycf$Quartile<-as.factor(KRiycf$Quartile) 
+###Regression analysis
+model <- svyglm(st_PHI ~ age+ sex + wealth + res + mo_edu, design = Benin, family = gaussian())
+summary(model)
+msummary(model)
 
-table(KRiycf$Quartile)
-
-min(KRiycf$age)
-
-#N in each quartile
-sum(KRiycf$newPHI<0, na.rm = T)
-mean(KRiycf$newPHI<0, na.rm = T)
-
-sum(KRiycf$newPHI>=0 & KRiycf$newPHI<2,na.rm = T)
-mean(KRiycf$newPHI>=0 & KRiycf$newPHI<2,na.rm = T)
-
-sum(KRiycf$newPHI==2,na.rm = T)
-mean(KRiycf$newPHI==2,na.rm = T)
-
-sum(KRiycf$newPHI>=3,na.rm = T)
-mean(KRiycf$newPHI>=3,na.rm = T)
-
-#Number of boys
-sum(KRiycf$sex==1 & KRiycf$newPHI<0, na.rm=T)
-mean(KRiycf$sex==1 & KRiycf$newPHI<0,na.rm = T)
-sum(KRiycf$sex==1, na.rm = T)
-
-#Mean age and SD
-mean(KRiycf[KRiycf$newPHI<0,'age'])
-sub_q1<-KRiycf$newPHI < 0
-sd(KRiycf$age[sub_q1])
-
-mean(KRiycf[KRiycf$newPHI>=0 & KRiycf$newPHI<2,'age'])
-sub_q2<-KRiycf$newPHI >= 0 & KRiycf$newPHI<2
-sd(KRiycf$age[sub_q2])
-
-mean(KRiycf[KRiycf$newPHI==2,'age'])
-sub_q3<-KRiycf$newPHI == 2
-sd(KRiycf$age[sub_q3])
-
-mean(KRiycf[KRiycf$newPHI>=3,'age'])
-sub_q4<-KRiycf$newPHI>= 3
-sd(KRiycf$age[sub_q4])
-min(dhs_benin_hr$HV271)
-
-#urban residence
-sum(KRiycf$v025==1 & KRiycf$newPHI>=2)
-mean(KRiycf$v025==1 & KRiycf$newPHI>=2)
-
-#christian religion
-sum(KRiycf$v130==2 & KRiycf$newPHI==0)
-mean(KRiycf$v130==2 & KRiycf$newPHI==0)
-
-#lack of mothers education
-sum(KRiycf$eduyr==0 & KRiycf$newPHI==0, na.rm = T)
-mean(KRiycf$eduyr==0 & KRiycf$newPHI==0, na.rm = T)
-sum(KRiycf$eduyr==0)
-
-#lack of mothers education
-sum(KRiycf$eduyr==0 & KRiycf$newPHI>=2)
-mean(KRiycf$eduyr==0 & KRiycf$newPHI>=2)
-
-plotNormalHistogram(KRiycf$age, prob = TRUE, col = "gray", lwd = 0.5, linecol = "blue", breaks = 30)
-
-
-
-
-```
-
-
-```{r}
-
-names(dhs_benin_ir)<-tolower(names(dhs_benin_ir))
-IRdata <- dhs_benin_ir %>%
-  filter(v012 <= 49) %>%
-  mutate(wt = v005/1000000) %>%
-  mutate(rc_edu = v149,
-         rc_edu = set_label(rc_edu, label = "Highest level of schooling attended or completed")) %>%
-  mutate(eduyr = case_when(
-    v133<=20 ~ v133, 
-    v133>20 & v133<95 ~ 20, 
-    v133>95 | v149>7 ~ 99)) %>%
-  replace_with_na(replace = list(eduyr = c(99)))
-which(colnames(KRiycf)=="age")
-mother_edu<-IRdata[,c(3,4,68,5112)]
-mother_edu<-mother_edu[,c(-4,-5,-6)]
-KRiycf<-left_join(KRiycf,mother_edu, by=c("v001","v002"))
-table(mother_edu$v130, useNA = "always")
-which(colnames(IRdata)=="eduyr")
-
-new<-KRiycf[,c(1192,1230)]
-KRiycf <- left_join(KRiycf,mother_edu,by=c("v001", "v002"))
+Reg_taug <- model %>%
+  tbl_regression(intercept = T,
+                 estimate_fun = function(x) style_sigfig(x, digits = 3),
+                 pvalue_fun   = function(x) style_pvalue(x, digits = 3),
+                 label  = list(age ~ "Age (months)",
+                               wealth   ~ "Wealth Index",
+                               res ~ "Residence",
+                               mo_edu ~ "Mothers' Education",
+                               sex   ~ "Sex")) %>%
+  add_global_p(keep = T, test.statistic = "F"
+  # Uncomment to use design df for Type III test p-values
+  # (but then they will not match the regression term p-values for
+  #  binary predictors)
+  #             , error.df = degf(fit.ex8.1$survey.design)
+                                 ) %>%
+modify_caption("Association of planetary health diet index with socio demographic and economic characteristics (Weighted Linear Regression") %>% as_gt()%>%gt::gtsave(filename = "Reg_taug.docx")
 
 ```
 
@@ -646,6 +720,123 @@ KRiycf <- KRiycf %>%
   set_variable_labels(nt_mad = "Child with minimum acceptable diet- last-born 6-23 months")
 
 ```
+
+
+
+```{r}
+##Correlation analysis 
+selected_vars <- KRiycf[, c(1180,1199,1201,1203)] # Replace with your variables
+  
+# Calculate the weighted correlation matrix
+weighted_cor_matrix <- wtd.cor(selected_vars, weight = KRiycf$wt)
+wtd.cor(selected_vars$newPHI,selected_vars$nt_mmf)
+# The result is a list; we extract the correlation matrix
+cor_matrix <- weighted_cor_matrix$correlation
+rownames(cor_matrix)<-c("Planetary health diet index","Minimum dietary diversity","Minimum meal frequency","Minimum acceptable diet")
+colnames(cor_matrix)<-c("Planetary health diet index","Minimum dietary diversity","Minimum meal frequency","Minimum acceptable diet")
+
+# Plotting the correlation matrix using corrplot
+corrplot(cor_matrix, method = "shade", 
+         tl.col = "black", tl.cex = 0.8, number.cex = 0.7,tl.pos = 'ld' ,
+         addCoef.col = "black", # Add correlation coefficient on the plot
+         order = "hclust", # Order by hierarchical clustering
+         col = colorRampPalette(c("red", "white", "blue"))(200), type='lower',tl.srt = 45, mar = c(1,1,2,1))
+
+```
+
+
+
+```{r}
+##Regression Plots
+
+# Create a new data frame for predictions
+#wealth
+new_data <- expand.grid(
+  wealth = seq(min(tb_data$wealth), max(tb_data$wealth), length.out = 1000),
+  age = mean(tb_data$age),
+  res = levels(factor(tb_data$res)),  # Adjust as needed
+  mo_edu = levels(factor(tb_data$mo_edu))   # Adjust as needed
+)
+
+# Add predictions to the new data frame
+new_data$predicted_outcome <- predict(model, newdata = new_data, type = "response")
+
+p1<-ggplot(new_data, aes(x = age, y = predicted_outcome, color = res)) +
+  geom_smooth() +
+  labs(x = "Age (Months)",
+       y = "Predicted Planetary Health Diet Index",
+    color = "Residence"
+  ) +
+  theme_minimal()+ theme(plot.margin = margin(10,10,30,10))
+
+
+
+p2<-ggplot(new_data, aes(x = age, y = predicted_outcome, color = mo_edu)) +
+  geom_smooth() +
+  labs(
+    x = "Age (Months)",
+    y = "Predicted Planetary Health Diet Index",
+    color = "Mothers Education"
+  ) +
+  theme_minimal() + theme(plot.margin = margin(10,10,30,10))
+
+p3<-ggplot(new_data, aes(x = wealth, y = predicted_outcome, color = res)) +
+  geom_smooth() +
+  labs(
+    x = "Wealth Index",
+    y = "Predicted Planetary Health Diet Index",
+    color = "Residence"
+  ) +
+  theme_minimal() + theme(plot.margin = margin(30,10,10,10))
+
+p4<-ggplot(new_data, aes(x = wealth, y = predicted_outcome, color = mo_edu)) +
+  geom_smooth() +
+  labs(
+    x = "Wealth Index",
+    y = "Predicted Planetary Health Diet Index",
+    color = "Mothers Education"
+  ) +
+  theme_minimal() + theme(plot.margin = margin(30,10,10,10))
+
+
+pf<-ggarrange(p1, p2, p3,p4, 
+          ncol = 2, nrow = 2,
+          heights = c(1, 1.2, 1, 1.2))
+annotate_figure(pf,top = "Linear Predicted model")
+
+
+###Linear regression model
+
+p1<-ggplot(tb_data, aes(x = age, y = newPHI, colour = res)) + 
+  geom_smooth(
+    method = "lm",
+    mapping = aes(weight = wt), span=0.3)+labs(x = "Age (months)", y = "Planetary health diet index",colour="Residence")
+
+p2<-ggplot(tb_data, aes(x = wealth, y = newPHI, colour = mo_edu)) + 
+  geom_smooth(
+    method = "lm",
+    mapping = aes(weight = wt), span=0.3)+labs(x = "Age (months)", y = "Planetary health diet index", colour="Mothers Education")
+
+p3<-ggplot(tb_data, aes(x = wealth, y = newPHI, colour = res)) + 
+  geom_smooth(
+    method = "lm",
+    mapping = aes(weight = wt), span=0.3)+labs(x = "Wealth index", y = "Planetary health diet index", colour="Residence")
+
+p4<-ggplot(tb_data, aes(x = wealth, y = newPHI, colour = mo_edu)) + 
+  geom_smooth(
+    method = "lm",
+    mapping = aes(weight = wt), span=0.3)+labs(x = "Wealth index", y = "Planetary health diet index", colour="Mothers Education")
+
+pf<-ggarrange(p1, p2, p3,p4, 
+              ncol = 2, nrow = 2,
+              heights = c(1, 1.2, 1, 1.2))
+annotate_figure(pf,top = "Linear Regression")
+
+
+scatter.smooth(tb_data$newPHI,span = 2/3, family = c("symmetric"))
+
+```
+
 
 
 ```{r}
